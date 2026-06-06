@@ -106,8 +106,20 @@ node server.js
    | Build Command | `npm install` |
    | Start Command | `node server.js` |
 
-5. Environment に `GITHUB_PAT` を追加
+5. Environment に以下を追加
+
+   | キー | 値 | 説明 |
+   |---|---|---|
+   | `GITHUB_PAT` | （取得した PAT） | バックアップ用トークン |
+   | `GITHUB_OWNER` | `choco-back` など | バックアップ先のオーナー名（省略時: `kuru-bana`） |
+   | `GITHUB_REPO` | `Access-Counter` など | バックアップ先のリポジトリ名 |
+   | `GITHUB_FILE` | `Choco-tube-plus.json` など | バックアップ先のファイルパス |
+
 6. Deploy
+
+### Node.js バージョンについて
+
+Node.js 24 では `npm install` が失敗するバグがあります。本プロジェクトは `package.json` の `engines` と `.node-version` で **Node.js 20.x** を指定しているため、Render が自動的に 20.x を使用します。
 
 ---
 
