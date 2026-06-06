@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Access Counter</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700&display=swap');
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #0a0a0f;
+      font-family: 'Orbitron', monospace;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 255, 180, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 180, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Radial glow in center */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0, 255, 180, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .title {
+      color: #00ffb4;
+      font-size: 1rem;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      opacity: 0.7;
+      text-shadow: 0 0 20px rgba(0, 255, 180, 0.5);
+    }
+
+    .counter-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .digits-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .digit-box {
+      width: 72px;
+      height: 100px;
+      background: linear-gradient(160deg, #111820 0%, #0d1117 100%);
+      border: 1px solid rgba(0, 255, 180, 0.25);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(0,255,180,0.05),
+        0 4px 20px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+      transition: all 0.3s ease;
+    }
+
+    /* Horizontal divider line in center */
+    .digit-box::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 1px;
+      background: rgba(0, 255, 180, 0.12);
+      pointer-events: none;
+    }
+
+    /* Top reflection */
+    .digit-box::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .digit-box.new-digit {
+      animation: slideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.7);
+        width: 0;
+        margin: 0;
+        padding: 0;
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        width: 72px;
+      }
+    }
+
+    .digit-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+
+    .digit-char {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 3.2rem;
+      color: #00ffb4;
+      text-shadow:
+        0 0 10px rgba(0, 255, 180, 0.8),
+        0 0 30px rgba(0, 255, 180, 0.4),
+        0 0 60px rgba(0, 255, 180, 0.2);
+      line-height: 1;
+      position: relative;
+    }
+
+    .digit-char.flip {
+      animation: flipDigit 0.35s ease forwards;
+    }
+
+    @keyframes flipDigit {
+      0%   { transform: translateY(0); opacity: 1; }
+      40%  { transform: translateY(-18px); opacity: 0; }
+      60%  { transform: translateY(18px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Glow pulse on update */
+    .digit-box.updated {
+      animation: glowPulse 0.5s ease forwards;
+    }
+
+    @keyframes glowPulse {
+      0%   { border-color: rgba(0, 255, 180, 0.25); box-shadow: 0 0 0 1px rgba(0,255,180,0.05), 0 4px 20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05); }
+      50%  { border-color: rgba(0, 255, 180, 0.8);  box-shadow: 0 0 20px rgba(0, 255, 180, 0.4), 0 4px 20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05); }
+      100% { border-color: rgba(0, 255, 180, 0.25); box-shadow: 0 0 0 1px rgba(0,255,180,0.05), 0 4px 20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05); }
+    }
+
+    .separator {
+      color: rgba(0, 255, 180, 0.25);
+      font-size: 2rem;
+      line-height: 100px;
+      user-select: none;
+    }
+
+    .label-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .digit-label {
+      width: 72px;
+      text-align: center;
+      font-size: 0.45rem;
+      letter-spacing: 0.15em;
+      color: rgba(0, 255, 180, 0.3);
+      text-transform: uppercase;
+    }
+
+    .sub-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .total-label {
+      font-size: 0.55rem;
+      letter-spacing: 0.4em;
+      color: rgba(0, 255, 180, 0.4);
+      text-transform: uppercase;
+    }
+
+    .scan-line {
+      position: fixed;
+      top: -100%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0, 255, 180, 0.3), transparent);
+      animation: scanDown 6s linear infinite;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    @keyframes scanDown {
+      from { top: -2px; }
+      to   { top: 100%; }
+    }
+
+    .corner {
+      position: fixed;
+      width: 24px;
+      height: 24px;
+      opacity: 0.4;
+    }
+    .corner.tl { top: 24px; left: 24px; border-top: 1px solid #00ffb4; border-left: 1px solid #00ffb4; }
+    .corner.tr { top: 24px; right: 24px; border-top: 1px solid #00ffb4; border-right: 1px solid #00ffb4; }
+    .corner.bl { bottom: 24px; left: 24px; border-bottom: 1px solid #00ffb4; border-left: 1px solid #00ffb4; }
+    .corner.br { bottom: 24px; right: 24px; border-bottom: 1px solid #00ffb4; border-right: 1px solid #00ffb4; }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #00ffb4;
+      box-shadow: 0 0 8px #00ffb4;
+      animation: blink 1.4s ease-in-out infinite;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    .status-text {
+      font-size: 0.5rem;
+      letter-spacing: 0.3em;
+      color: rgba(0, 255, 180, 0.45);
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <div class="scan-line"></div>
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <div class="container">
+    <div class="title">Access Counter</div>
+
+    <div class="counter-wrapper">
+      <div class="digits-row" id="digits-row"></div>
+      <div class="label-row" id="label-row"></div>
+    </div>
+
+    <div class="sub-info">
+      <div class="total-label">Total Visits</div>
+      <div>
+        <span class="status-dot"></span>
+        <span class="status-text">LIVE</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let prevDigits = [];
+
+    function renderDigits(count) {
+      const str = String(count);
+      const digits = str.split('');
+      const row = document.getElementById('digits-row');
+      const labelRow = document.getElementById('label-row');
+
+      const placeNames = ['T','H','H','H','H','H','H','H','H','H'].map((_, i, arr) => {
+        const places = ['1', '10', '100', '1K', '10K', '100K', '1M', '10M', '100M', '1B'];
+        return places[digits.length - 1 - i] || '';
+      });
+
+      if (digits.length > prevDigits.length) {
+        const newCount = digits.length - prevDigits.length;
+        for (let i = 0; i < newCount; i++) {
+          const box = document.createElement('div');
+          box.className = 'digit-box new-digit';
+          box.innerHTML = `<div class="digit-inner"><span class="digit-char">0</span></div>`;
+          row.insertBefore(box, row.firstChild);
+
+          const lbl = document.createElement('div');
+          lbl.className = 'digit-label';
+          lbl.textContent = '';
+          labelRow.insertBefore(lbl, labelRow.firstChild);
+        }
+        setTimeout(() => {
+          row.querySelectorAll('.new-digit').forEach(el => el.classList.remove('new-digit'));
+        }, 600);
+      }
+
+      const boxes = row.querySelectorAll('.digit-box');
+      const labels = labelRow.querySelectorAll('.digit-label');
+
+      const places = ['1', '10', '100', '1K', '10K', '100K', '1M', '10M', '100M', '1B'];
+
+      digits.forEach((d, i) => {
+        const box = boxes[i];
+        const span = box.querySelector('.digit-char');
+        const prevVal = prevDigits[i];
+
+        if (prevVal !== d) {
+          span.classList.remove('flip');
+          void span.offsetWidth;
+          span.classList.add('flip');
+          box.classList.remove('updated');
+          void box.offsetWidth;
+          box.classList.add('updated');
+          setTimeout(() => span.classList.remove('flip'), 350);
+          setTimeout(() => box.classList.remove('updated'), 500);
+        }
+        span.textContent = d;
+
+        if (labels[i]) {
+          labels[i].textContent = places[digits.length - 1 - i] || '';
+        }
+      });
+
+      prevDigits = digits;
+    }
+
+    async function fetchCount() {
+      try {
+        const res = await fetch('/api/count');
+        const data = await res.json();
+        renderDigits(data.count);
+      } catch (e) {
+        console.error('fetch error', e);
+      }
+    }
+
+    fetchCount();
+  </script>
+</body>
+</html>
