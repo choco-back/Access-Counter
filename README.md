@@ -1,3 +1,5 @@
+## yarn install --frozen-lockfile
+## node server.js
 # Access Counter
 
 サイバーパンク風デザインのアクセスカウンター。桁が増えるたびに自動でボックスが追加され、毎日 0:00（JST）に GitHub へバックアップを送信します。
